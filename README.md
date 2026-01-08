@@ -10,7 +10,7 @@
 ![Issues](https://img.shields.io/badge/Issues-Open-red.svg)
 ![PRs](https://img.shields.io/badge/PRs-Welcome-green.svg)
 
-# 🏸 TrackNetV3_Attention - 端到端羽毛球视频智能分析与专业复盘系统
+# 🏸 WindFeather Eye - 端到端羽毛球视频智能分析与专业复盘系统
 
 <div align="center">
 
@@ -24,7 +24,7 @@
 
 </div>
 
-> **TrackNetV3_Attention** 是一个完整的羽毛球视频分析系统，集成了球体检测、姿态估计、事件识别、击球分类、场地检测、数据可视化和专业复盘等功能。系统采用最先进的深度学习技术，为教练、运动员和研究人员提供全面的比赛分析工具。
+> **WindFeather Eye** 是一个完整的羽毛球视频分析系统，集成了球体检测、姿态估计、事件识别、击球分类、场地检测、数据可视化和专业复盘等功能。系统采用最先进的深度学习技术，为教练、运动员和研究人员提供全面的比赛分析工具。
 
 ---
 
@@ -304,8 +304,8 @@ sequenceDiagram
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourusername/TrackNetV3_Attention.git
-cd TrackNetV3_Attention
+git clone https://github.com/yourusername/WindFeather Eye.git
+cd WindFeather Eye
 
 # 创建虚拟环境（推荐）
 python -m venv venv
@@ -367,8 +367,8 @@ pip install pyside6
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourusername/TrackNetV3_Attention.git
-cd TrackNetV3_Attention
+git clone https://github.com/yourusername/WindFeather Eye.git
+cd WindFeather Eye
 
 # 安装依赖
 pip install -r requirements.txt
@@ -1983,7 +1983,7 @@ def detect_hits(self, fps=25, prominence=2, angle_threshold=30,
 ## 📁 项目结构
 
 ```
-TrackNetV3_Attention/
+WindFeather Eye/
 ├── core/                                    # 核心算法模块
 │   ├── TrackNetAttention.py                 # TrackNetV3 + CBAM 模型
 │   │   ├── Conv                            # 卷积块（Conv+BN+ReLU）
@@ -3833,7 +3833,7 @@ def process_trajectory(trajectory):
 ### 如何贡献
 
 #### 报告 Bug
-1. 在 [Issues](https://github.com/yourusername/TrackNetV3_Attention/issues) 中搜索是否已有相同问题
+1. 在 [Issues](https://github.com/yourusername/WindFeather Eye/issues) 中搜索是否已有相同问题
 2. 如果没有，创建新的 Issue
 3. 使用清晰的标题描述问题
 4. 提供详细的重现步骤
@@ -3841,7 +3841,7 @@ def process_trajectory(trajectory):
 6. 添加相关的日志和错误信息
 
 #### 提出新功能
-1. 在 [Issues](https://github.com/yourusername/TrackNetV3_Attention/issues) 中创建新的 Issue
+1. 在 [Issues](https://github.com/yourusername/WindFeather Eye/issues) 中创建新的 Issue
 2. 清晰描述新功能
 3. 说明功能的使用场景
 4. 提供设计思路或伪代码
@@ -4233,10 +4233,10 @@ MIT 许可证是一种非常宽松的许可证，允许：
 
 如果您觉得本项目对您有帮助，欢迎通过以下方式支持：
 
-- **Star 项目**: https://github.com/yourusername/TrackNetV3_Attention
-- **Fork 项目**: https://github.com/yourusername/TrackNetV3_Attention/fork
-- **报告 Bug**: https://github.com/yourusername/TrackNetV3_Attention/issues
-- **提交 PR**: https://github.com/yourusername/TrackNetV3_Attention/pulls
+- **Star 项目**: https://github.com/yourusername/WindFeather Eye
+- **Fork 项目**: https://github.com/yourusername/WindFeather Eye/fork
+- **报告 Bug**: https://github.com/yourusername/WindFeather Eye/issues
+- **提交 PR**: https://github.com/yourusername/WindFeather Eye/pulls
 - **分享项目**: 在社交媒体上分享本项目
 
 ### 更新日志
@@ -4251,7 +4251,7 @@ MIT 许可证是一种非常宽松的许可证，允许：
 
 **如果这个项目对您有帮助，请给我们一个 Star ⭐**
 
-[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/TrackNetV3_Attention&type=Date)]
+[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/WindFeather Eye&type=Date)]
 
 **Made with ❤️ by [Your Name](https://github.com/yourusername)**
 
