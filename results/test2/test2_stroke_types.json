@@ -1,0 +1,163 @@
+[
+  {
+    "frame": 18,
+    "player": 2,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 45,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 59,
+    "player": 1,
+    "stroke_type_id": 28,
+    "stroke_type_name": "\u6b63\u624b\u76f4\u7ebf\u7403",
+    "stroke_type_name_en": "forehand_straight"
+  },
+  {
+    "frame": 74,
+    "player": 2,
+    "stroke_type_id": 9,
+    "stroke_type_name": "\u53cd\u624b\u7f51\u524d\u7403",
+    "stroke_type_name_en": "backhand_net_shot"
+  },
+  {
+    "frame": 111,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 123,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 161,
+    "player": 2,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 169,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 178,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 190,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 212,
+    "player": 1,
+    "stroke_type_id": 19,
+    "stroke_type_name": "\u53cd\u624b\u65cb\u8f6c\u7403",
+    "stroke_type_name_en": "backhand_spin"
+  },
+  {
+    "frame": 235,
+    "player": 2,
+    "stroke_type_id": 19,
+    "stroke_type_name": "\u53cd\u624b\u65cb\u8f6c\u7403",
+    "stroke_type_name_en": "backhand_spin"
+  },
+  {
+    "frame": 262,
+    "player": 1,
+    "stroke_type_id": 19,
+    "stroke_type_name": "\u53cd\u624b\u65cb\u8f6c\u7403",
+    "stroke_type_name_en": "backhand_spin"
+  },
+  {
+    "frame": 273,
+    "player": 1,
+    "stroke_type_id": 19,
+    "stroke_type_name": "\u53cd\u624b\u65cb\u8f6c\u7403",
+    "stroke_type_name_en": "backhand_spin"
+  },
+  {
+    "frame": 301,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 341,
+    "player": 2,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 363,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 387,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 401,
+    "player": 2,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 424,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 484,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 492,
+    "player": 1,
+    "stroke_type_id": 10,
+    "stroke_type_name": "\u6b63\u624b\u6311\u7403",
+    "stroke_type_name_en": "forehand_lift"
+  },
+  {
+    "frame": 509,
+    "player": 2,
+    "stroke_type_id": 6,
+    "stroke_type_name": "\u6b63\u624b\u5e73\u62bd",
+    "stroke_type_name_en": "forehand_drive"
+  }
+]

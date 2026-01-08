@@ -1,0 +1,4 @@
+models/*.pth
+.idea/
+__pycache__/
+*.pyc
