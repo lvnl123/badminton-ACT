@@ -4228,12 +4228,6 @@ MIT 许可证是一种非常宽松的许可证，允许：
 
 如有任何问题或建议，请通过以下方式联系：
 
-- **邮箱**: your.email@example.com
-- **GitHub Issues**: https://github.com/yourusername/TrackNetV3_Attention/issues
-- **GitHub Discussions**: https://github.com/yourusername/TrackNetV3_Attention/discussions
-- **Stack Overflow**: 使用标签 `tracknetv3-attention`
-- **Reddit**: r/ComputerVision
-- **Discord**: https://discord.gg/yourinvitecode
 
 ### 支持方式
 
@@ -4247,11 +4241,9 @@ MIT 许可证是一种非常宽松的许可证，允许：
 
 ### 更新日志
 
-查看 [CHANGELOG.md](CHANGELOG.md) 了解项目的更新历史。
 
 ### 路线图
 
-查看 [ROADMAP.md](ROADMAP.md) 了解项目的未来计划。
 
 ---
 
@@ -4264,3 +4256,4 @@ MIT 许可证是一种非常宽松的许可证，允许：
 **Made with ❤️ by [Your Name](https://github.com/yourusername)**
 
 </div>
+
