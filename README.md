@@ -10,7 +10,7 @@
 ![Issues](https://img.shields.io/badge/Issues-Open-red.svg)
 ![PRs](https://img.shields.io/badge/PRs-Welcome-green.svg)
 
-# 🏸 WindFeather Eye - 端到端羽毛球视频智能分析与专业复盘系统
+# 🏸 TrackNetV3_Attention - 端到端羽毛球视频智能分析与专业复盘系统
 
 <div align="center">
 
@@ -24,7 +24,7 @@
 
 </div>
 
-> **WindFeather Eye** 是一个完整的羽毛球视频分析系统，集成了球体检测、姿态估计、事件识别、击球分类、场地检测、数据可视化和专业复盘等功能。系统采用最先进的深度学习技术，为教练、运动员和研究人员提供全面的比赛分析工具。
+> **TrackNetV3_Attention** 是一个完整的羽毛球视频分析系统，集成了球体检测、姿态估计、事件识别、击球分类、场地检测、数据可视化和专业复盘等功能。系统采用最先进的深度学习技术，为教练、运动员和研究人员提供全面的比赛分析工具。
 
 ---
 
@@ -92,170 +92,1074 @@
 
 ---
 
+## 📊 图表目录
+
+本文档包含以下图表，帮助您更好地理解系统架构和功能：
+
+### Mermaid 图表（GitHub 原生支持）
+- [整体数据流程](#整体数据流程) - 系统整体数据流向和处理流程
+- [TrackNetV3 + CBAM 网络架构](#tracknetv3--cbam-网络架构) - 球体检测网络详细架构
+- [CBAM 注意力机制详解](#cbam-注意力机制详解) - 通道和空间注意力机制
+- [BST Transformer 架构](#bst-transformer-架构) - 击球分类模型架构
+- [处理流水线时序图](#处理流水线时序图) - 各模块间的时序交互
+- [GUI 界面布局](#gui-界面布局) - 用户界面结构
+- [检测流程](#检测流程) - 击球事件检测流程
+- [详细检测流程图](#详细检测流程图) - 击球事件检测详细步骤
+- [卡尔曼滤波器工作流程图](#卡尔曼滤波器工作流程图) - 轨迹平滑算法流程
+- [BST 架构流程图](#bst-架构流程图) - 击球分类算法流程
+- [性能优化流程图](#性能优化流程图) - 系统性能优化策略
+- [参数调优流程图](#参数调优流程图) - 检测参数调优流程
+- [故障排除流程图](#故障排除流程图) - 常见问题解决流程
+- [调试流程图](#调试流程图) - 系统调试方法流程
+- [录制流程图](#录制流程图) - 视频录制最佳实践
+- [扩展性架构图](#扩展性架构图) - 系统扩展性设计
+- [骨骼结构流程图](#骨骼结构流程图) - 人体姿态骨骼结构
+- [CBAM 通道注意力流程图](#cbam-通道注意力流程图) - 通道注意力详细流程
+- [CBAM 空间注意力流程图](#cbam-空间注意力流程图) - 空间注意力详细流程
+
+### PlantUML 图表（通过服务渲染）
+- [系统组件类图](#系统组件类图) - 核心类及其关系
+- [数据流部署图](#数据流部署图) - 系统部署架构
+- [状态机图](#状态机图) - 系统状态转换
+- [TrackNetV3 模块详细设计图](#tracknetv3-模块详细设计图) - TrackNetV3 类设计
+- [BST Transformer 模块详细设计图](#bst-transformer-模块详细设计图) - BST 类设计
+
+### 图表说明
+- **Mermaid 图表**：在 GitHub 上直接渲染，无需额外配置
+- **PlantUML 图表**：使用 PlantUML 服务渲染，支持完整的 UML 规范
+- **颜色主题**：统一的颜色方案，便于理解不同模块的功能
+- **图标使用**：使用 Emoji 图标增强可读性
+- **子图分组**：使用 subgraph 进行逻辑分组，提高可读性
+
+---
+
 ## 🏗️ 系统架构
 
 ### 整体数据流程
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e1f5ff',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#1976d2',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[输入视频<br/>MP4/AVI/MOV] --> B[预处理<br/>帧提取+尺寸调整]
-    B --> C[Step 0: 球场/球网检测<br/>Keypoint RCNN]
-    B --> D[Step 1: 羽毛球检测<br/>TrackNetV3+CBAM]
-    B --> E[Step 2: 姿态检测<br/>MMPose]
-    C --> F[场地信息<br/>边界参数+关键点]
-    D --> G[球体轨迹<br/>原始+去噪]
-    E --> H[姿态数据<br/>关键点+骨架]
-    F --> I[Step 2.5: 击球事件检测<br/>峰值+角度+姿态]
+    subgraph "📥 输入层"
+        A[📹 输入视频<br/>MP4/AVI/MOV]
+    end
+    
+    subgraph "⚙️ 预处理层"
+        B[🔧 预处理<br/>帧提取+尺寸调整]
+    end
+    
+    subgraph "🔍 检测层"
+        C[🟡 Step 0: 球场/球网检测<br/>Keypoint RCNN]
+        D[🎯 Step 1: 羽毛球检测<br/>TrackNetV3+CBAM]
+        E[🏃 Step 2: 姿态检测<br/>MMPose]
+    end
+    
+    subgraph "📊 数据层"
+        F[📋 场地信息<br/>边界参数+关键点]
+        G[📍 球体轨迹<br/>原始+去噪]
+        H[🦴 姿态数据<br/>关键点+骨架]
+    end
+    
+    subgraph "🧠 处理层"
+        I[⚡ Step 2.5: 击球事件检测<br/>峰值+角度+姿态]
+        J[🎾 Step 2.6: 击球类型分类<br/>BST Transformer]
+    end
+    
+    subgraph "🎨 可视化层"
+        K[🖼️ Step 3: 综合可视化<br/>轨迹+姿态+场地+事件]
+    end
+    
+    subgraph "💾 输出层"
+        L[📤 Step 4: 数据导出<br/>CSV+JSON+视频]
+        M[📈 输出结果<br/>分析报告+可视化]
+    end
+    
+    A --> B
+    B --> C
+    B --> D
+    B --> E
+    C --> F
+    D --> G
+    E --> H
+    F --> I
     G --> I
     H --> I
-    I --> J[Step 2.6: 击球类型分类<br/>BST Transformer]
-    J --> K[Step 3: 综合可视化<br/>轨迹+姿态+场地+事件]
-    K --> L[Step 4: 数据导出<br/>CSV+JSON+视频]
-    L --> M[输出结果<br/>分析报告+可视化]
+    I --> J
+    J --> K
+    K --> L
+    L --> M
+    
+    classDef inputStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef preprocessStyle fill:#90caf9,stroke:#0d9488,stroke-width:2px
+    classDef detectStyle fill:#ffcc00,stroke:#e6b800,stroke-width:2px
+    classDef dataStyle fill:#ff6b6b,stroke:#c0392b,stroke-width:2px
+    classDef processStyle fill:#dda0dd,stroke:#9b59b6,stroke-width:2px
+    classDef vizStyle fill:#98fb98,stroke:#2e7d32,stroke-width:2px
+    classDef outputStyle fill:#ffcccb,stroke:#d35400,stroke-width:2px
+    
+    class A inputStyle
+    class B preprocessStyle
+    class C,D,E detectStyle
+    class F,G,H dataStyle
+    class I,J processStyle
+    class K vizStyle
+    class L,M outputStyle
 ```
 
 ### TrackNetV3 + CBAM 网络架构
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#9b59b6',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#8e44ad',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph LR
-    A[输入<br/>9帧×3通道] --> B[Conv2d 9→64]
-    B --> C[Conv2d 64→64]
-    C --> D[CBAM 64]
-    D --> E[MaxPool 2×2]
-    E --> F[Conv2d 64→128]
-    F --> G[Conv2d 128→128]
-    G --> H[CBAM 128]
-    H --> I[MaxPool 2×2]
-    I --> J[Conv2d 128→256]
-    J --> K[Conv2d 256→256]
-    K --> L[CBAM 256]
-    L --> M[MaxPool 2×2]
-    M --> N[Conv2d 256→512]
-    N --> O[Conv2d 512→512]
-    O --> P[CBAM 512]
-    P --> Q[Upsample ×2]
-    Q --> R[Concat 768]
-    R --> S[Conv2d 768→256]
-    S --> T[Conv2d 256→256]
-    T --> U[CBAM 256]
-    U --> V[Upsample ×2]
-    V --> W[Concat 384]
-    W --> X[Conv2d 384→128]
-    X --> Y[Conv2d 128→128]
-    Y --> Z[CBAM 128]
-    Z --> AA[Upsample ×2]
-    AA --> AB[Concat 192]
-    AB --> AC[Conv2d 192→64]
-    AC --> AD[Conv2d 64→64]
-    AD --> AE[CBAM 64]
-    AE --> AF[Conv2d 64→3]
-    AF --> AG[输出<br/>3通道热力图]
+    subgraph "📥 输入层"
+        A[📹 输入<br/>9帧×3通道]
+    end
+    
+    subgraph "🔵 编码器"
+        subgraph "Stage 1"
+            B[Conv2d 9→64]
+            C[Conv2d 64→64]
+            D[CBAM 64]
+            E[MaxPool 2×2]
+        end
+        
+        subgraph "Stage 2"
+            F[Conv2d 64→128]
+            G[Conv2d 128→128]
+            H[CBAM 128]
+            I[MaxPool 2×2]
+        end
+        
+        subgraph "Stage 3"
+            J[Conv2d 128→256]
+            K[Conv2d 256→256]
+            L[CBAM 256]
+            M[MaxPool 2×2]
+        end
+        
+        subgraph "Stage 4"
+            N[Conv2d 256→512]
+            O[Conv2d 512→512]
+            P[CBAM 512]
+        end
+    end
+    
+    subgraph "🟢 解码器"
+        subgraph "Stage 1"
+            Q[Upsample ×2]
+            R[Concat 768]
+            S[Conv2d 768→256]
+            T[Conv2d 256→256]
+            U[CBAM 256]
+        end
+        
+        subgraph "Stage 2"
+            V[Upsample ×2]
+            W[Concat 384]
+            X[Conv2d 384→128]
+            Y[Conv2d 128→128]
+            Z[CBAM 128]
+        end
+        
+        subgraph "Stage 3"
+            AA[Upsample ×2]
+            AB[Concat 192]
+            AC[Conv2d 192→64]
+            AD[Conv2d 64→64]
+            AE[CBAM 64]
+        end
+    end
+    
+    subgraph "🟡 输出层"
+        AF[Conv2d 64→3]
+        AG[📊 输出<br/>3通道热力图]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+    K --> L
+    L --> M
+    M --> N
+    N --> O
+    O --> P
+    P --> Q
+    Q --> R
+    R --> S
+    S --> T
+    T --> U
+    U --> V
+    V --> W
+    W --> X
+    X --> Y
+    Y --> Z
+    Z --> AA
+    AA --> AB
+    AB --> AC
+    AC --> AD
+    AD --> AE
+    AE --> AF
+    AF --> AG
+    
+    classDef inputStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef encoderStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef decoderStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef outputStyle fill:#f1c40f,stroke:#e74c3c,stroke-width:2px
+    classDef cbamStyle fill:#e74c3c,stroke:#c0392b,stroke-width:3px,stroke-dasharray: 5 5
+    classDef poolStyle fill:#95a5a6,stroke:#7f8c8d,stroke-width:2px
+    classDef convStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef upsampleStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef concatStyle fill:#1abc9c,stroke:#16a085,stroke-width:2px
+    
+    class A inputStyle
+    class B,C,E,I,M,U,AE cbamStyle
+    class D,H,P,Z convStyle
+    class F,G,J,K,N,O poolStyle
+    class Q,V,AA upsampleStyle
+    class R,W,AB concatStyle
+    class S,T,X,Y,AC,AD convStyle
+    class AF outputStyle
+    class AG outputStyle
 ```
 
 ### CBAM 注意力机制详解
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e74c3c',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#c0392b',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[输入特征图] --> B[通道注意力]
-    B --> B1[全局平均池化]
-    B --> B2[全局最大池化]
-    B1 --> B3[共享MLP]
+    subgraph "📥 输入"
+        A[📊 输入特征图<br/>H×W×C]
+    end
+    
+    subgraph "🔵 通道注意力"
+        subgraph "池化"
+            B1[📉 全局平均池化]
+            B2[📈 全局最大池化]
+        end
+        
+        subgraph "共享MLP"
+            B3[🧠 共享MLP<br/>降维: C→C/r<br/>升维: C/r→C]
+        end
+        
+        subgraph "激活"
+            B4[🔄 Sigmoid激活]
+        end
+        
+        subgraph "权重"
+            B5[⚖️ 通道权重<br/>1×1×C]
+        end
+    end
+    
+    subgraph "🟢 空间注意力"
+        subgraph "池化"
+            D1[📉 通道平均池化<br/>沿通道维度平均<br/>H×W×1]
+            D2[📈 通道最大池化<br/>沿通道维度最大<br/>H×W×1]
+        end
+        
+        subgraph "拼接"
+            D3[🔗 拼接<br/>H×W×2]
+        end
+        
+        subgraph "卷积"
+            D4[🧮 卷积层<br/>7×7卷积]
+        end
+        
+        subgraph "激活"
+            D5[🔄 Sigmoid激活]
+        end
+        
+        subgraph "权重"
+            E[⚖️ 空间权重<br/>H×W×1]
+        end
+    end
+    
+    subgraph "🟡 输出"
+        F[📊 输出特征图<br/>H×W×C]
+    end
+    
+    A --> B1
+    A --> B2
+    B1 --> B3
     B2 --> B3
-    B3 --> B4[Sigmoid激活]
-    B4 --> B5[通道权重]
-    B5 --> C[逐通道相乘]
-    C --> D[空间注意力]
-    D --> D1[通道平均池化]
-    D --> D2[通道最大池化]
-    D1 --> D3[拼接]
+    B3 --> B4
+    B4 --> B5
+    B5 --> C[🔄 逐通道相乘]
+    C --> D1
+    C --> D2
+    D1 --> D3
     D2 --> D3
-    D3 --> D4[卷积层]
-    D4 --> D5[Sigmoid激活]
-    D5 --> E[空间权重]
-    E --> F[逐像素相乘]
-    F --> G[输出特征图]
+    D3 --> D4
+    D4 --> D5
+    D5 --> E
+    E --> F[🔄 逐像素相乘]
+    
+    classDef inputStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef channelStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
+    classDef spatialStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef outputStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef poolStyle fill:#95a5a6,stroke:#7f8c8d,stroke-width:2px,stroke-dasharray: 3 3
+    classDef mlpStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef activateStyle fill:#f1c40f,stroke:#e74c3c,stroke-width:2px
+    classDef weightStyle fill:#ff9800,stroke:#e67e22,stroke-width:2px
+    classDef concatStyle fill:#1abc9c,stroke:#16a085,stroke-width:2px
+    classDef convStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef multiplyStyle fill:#e67e22,stroke:#d35400,stroke-width:2px,stroke-dasharray: 5 5
+    
+    class A inputStyle
+    class B1,B2 poolStyle
+    class B3 mlpStyle
+    class B4,D5 activateStyle
+    class B5,E weightStyle
+    class C multiplyStyle
+    class D1,D2 poolStyle
+    class D3 concatStyle
+    class D4 convStyle
+    class F outputStyle
 ```
 
 ### BST Transformer 架构
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#9b59b6',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#8e44ad',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[输入<br/>姿态+轨迹+位置] --> B[TCN 姿态编码]
-    A --> C[TCN 轨迹编码]
-    B --> D[时序Transformer]
+    subgraph "📥 输入层"
+        A[📊 输入<br/>姿态+轨迹+位置]
+    end
+    
+    subgraph "🧠 编码层"
+        subgraph "TCN 编码"
+            B[🔵 TCN 姿态编码<br/>17关键点×2坐标]
+            C[🔵 TCN 轨迹编码<br/>2坐标×时序]
+        end
+    end
+    
+    subgraph "🟣 时序 Transformer"
+        subgraph "自注意力"
+            D[🟡 自注意力层<br/>多头注意力<br/>前馈网络]
+        end
+        
+        subgraph "Token 生成"
+            E[🟠 分类Token<br/>全局信息]
+            F[🟠 姿态Token<br/>时序信息]
+            G[🟠 轨迹Token<br/>时序信息]
+        end
+    end
+    
+    subgraph "🎯 交叉注意力"
+        H[🟢 交叉注意力层<br/>分类-姿态<br/>分类-轨迹]
+    end
+    
+    subgraph "🔄 交互 Transformer"
+        I[🟣 交互层<br/>多层Transformer<br/>残差连接]
+    end
+    
+    subgraph "📊 输出层"
+        J[🧮 MLP Head<br/>全连接层<br/>Dropout]
+        K[📈 输出<br/>35类击球类型<br/>Softmax]
+    end
+    
+    A --> B
+    A --> C
+    B --> D
     C --> D
-    D --> E[分类Token]
-    D --> F[姿态Token]
-    D --> G[轨迹Token]
-    E --> H[交叉注意力]
+    D --> E
+    D --> F
+    D --> G
+    E --> H
     F --> H
     G --> H
-    H --> I[交互Transformer]
-    I --> J[MLP Head]
-    J --> K[输出<br/>35类击球类型]
+    H --> I
+    I --> J
+    J --> K
+    
+    classDef inputStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef encodeStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef temporalStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef crossStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef interactStyle fill:#e67e22,stroke:#d35400,stroke-width:2px
+    classDef mlpStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef outputStyle fill:#1abc9c,stroke:#16a085,stroke-width:3px
+    classDef tokenStyle fill:#f1c40f,stroke:#e74c3c,stroke-width:2px,stroke-dasharray: 5 5
+    
+    class A inputStyle
+    class B,C encodeStyle
+    class D temporalStyle
+    class E,F,G tokenStyle
+    class H crossStyle
+    class I interactStyle
+    class J mlpStyle
+    class K outputStyle
 ```
 
 ### 处理流水线时序图
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e1f5ff',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#1976d2',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0',
+  'actorBkgColor': '#e1f5ff',
+  'actorBorderColor': '#1976d2',
+  'participantBkgColor': '#90caf9',
+  'participantBorderColor': '#0d9488',
+  'noteBkgColor': '#fff3cd',
+  'noteBorderColor': '#ffeb3b'
+}}}
 sequenceDiagram
-    participant V as 输入视频
-    participant C as 场地检测
-    participant B as 球体检测
-    participant P as 姿态检测
-    participant E as 事件检测
-    participant S as 击球分类
-    participant Viz as 可视化
-    participant Exp as 导出
+    participant V as 📹 输入视频
+    participant C as 🏟️ 场地检测
+    participant B as 🎯 球体检测
+    participant P as 🏃 姿态检测
+    participant E as ⚡ 事件检测
+    participant S as 🎾 击球分类
+    participant Viz as 🖼️ 可视化
+    participant Exp as 📤 导出
     
     V->>C: 每帧/间隔检测
+    activate C
     C->>C: 计算场地参数
+    deactivate C
+    
     V->>B: 逐帧检测
+    activate B
     B->>B: 卡尔曼滤波平滑
+    deactivate B
+    
     V->>P: 逐帧检测
+    activate P
     P->>P: 球员分配
+    deactivate P
+    
     B->>E: 轨迹数据
     P->>E: 姿态数据
+    activate E
     E->>E: 峰值检测
     E->>E: 角度分析
     E->>E: 姿态验证
+    deactivate E
+    
     E->>S: 击球帧
     P->>S: 姿态数据
+    activate S
     S->>S: 时序分割
     S->>S: Transformer分类
+    deactivate S
+    
     C->>Viz: 场地关键点
     B->>Viz: 球体轨迹
     P->>Viz: 姿态骨架
     E->>Viz: 击球事件
     S->>Viz: 击球类型
+    activate Viz
+    Viz->>Viz: 综合视频合成
+    deactivate Viz
+    
     Viz->>Exp: 综合视频
     Viz->>Exp: CSV数据
     Viz->>Exp: JSON事件
+    activate Exp
+    Exp->>Exp: 数据导出
+    deactivate Exp
+    
+    note over C: 场地检测<br/>每30帧检测一次
+    note over B: 球体检测<br/>TrackNetV3+CBAM
+    note over P: 姿态检测<br/>MMPose RTMPose
+    note over E: 事件检测<br/>多特征融合
+    note over S: 击球分类<br/>BST Transformer
+    note over Viz: 可视化<br/>PySide6 界面
+    note over Exp: 导出<br/>多格式支持
 ```
 
 ### GUI 界面布局
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#ff9800',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#e67e22',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[主窗口] --> B[视频播放器区域]
-    A --> C[数据可视化区域]
-    A --> D[控制面板区域]
-    B --> B1[输入视频播放器]
-    B --> B2[检测预览播放器]
-    B --> B3[输出视频播放器]
-    B --> B4[对比播放器]
-    C --> C1[概览标签页]
-    C --> C2[击球事件标签页]
-    C --> C3[CSV数据标签页]
-    C --> C4[球速曲线标签页]
-    C --> C5[球高度标签页]
-    C --> C6[分布标签页]
-    C --> C7[选手标签页]
-    D --> D1[参数标签页]
-    D --> D2[日志标签页]
-    D --> D3[运行状态]
-    D --> D4[结果浏览]
+    subgraph "🖼️ 主窗口"
+        A[🏠 主窗口<br/>PySide6 QMainWindow]
+    end
+    
+    subgraph "📹 视频播放器区域"
+        B1[🎬 输入视频播放器<br/>原始视频]
+        B2[🎬 检测预览播放器<br/>实时检测]
+        B3[🎬 输出视频播放器<br/>分析结果]
+        B4[🎬 对比播放器<br/>前后对比]
+    end
+    
+    subgraph "📊 数据可视化区域"
+        subgraph "概览标签页"
+            C1[📈 概览<br/>击球统计]
+            C2[🏃 选手分析<br/>覆盖区域]
+            C3[📊 分布分析<br/>球速/高度]
+        end
+        
+        subgraph "详细标签页"
+            C4[⚡ 击球事件标签页<br/>事件表格]
+            C5[📋 CSV数据标签页<br/>完整数据]
+            C6[📈 球速曲线标签页<br/>速度变化]
+            C7[📏 球高度标签页<br/>高度变化]
+        end
+        
+        subgraph "高级标签页"
+            C8[📊 分布标签页<br/>统计分布]
+            C9[🏃 选手标签页<br/>详细分析]
+        end
+    end
+    
+    subgraph "⚙️ 控制面板区域"
+        subgraph "参数标签页"
+            D1[🔧 参数配置<br/>检测阈值/模型选择]
+            D2[🎯 场地检测配置<br/>检测间隔]
+            D3[🏃 姿态模型配置<br/>RTMPose选择]
+        end
+        
+        subgraph "监控标签页"
+            D4[📝 日志标签页<br/>实时日志]
+            D5[📊 运行状态<br/>进度条]
+        end
+        
+        subgraph "结果管理"
+            D6[📁 结果浏览<br/>历史结果]
+            D7[💾 导出设置<br/>格式选择]
+        end
+    end
+    
+    A --> B1
+    A --> B2
+    A --> B3
+    A --> B4
+    A --> C1
+    A --> C2
+    A --> C3
+    A --> C4
+    A --> C5
+    A --> C6
+    A --> C7
+    A --> C8
+    A --> C9
+    A --> D1
+    A --> D2
+    A --> D3
+    A --> D4
+    A --> D5
+    A --> D6
+    A --> D7
+    
+    classDef mainWindowStyle fill:#ff9800,stroke:#e67e22,stroke-width:4px
+    classDef videoStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:2px
+    classDef overviewStyle fill:#90caf9,stroke:#0d9488,stroke-width:2px
+    classDef detailStyle fill:#ffcc00,stroke:#e6b800,stroke-width:2px
+    classDef advancedStyle fill:#ff6b6b,stroke:#c0392b,stroke-width:2px
+    classDef controlStyle fill:#dda0dd,stroke:#9b59b6,stroke-width:2px
+    classDef monitorStyle fill:#98fb98,stroke:#2e7d32,stroke-width:2px
+    classDef resultStyle fill:#ffcccb,stroke:#d35400,stroke-width:2px
+    
+    class A mainWindowStyle
+    class B1,B2,B3,B4 videoStyle
+    class C1,C2,C3 overviewStyle
+    class C4,C5,C6,C7 detailStyle
+    class C8,C9 advancedStyle
+    class D1,D2,D3 controlStyle
+    class D4,D5 monitorStyle
+    class D6,D7 resultStyle
 ```
+
+---
+
+## 📊 PlantUML 架构设计图
+
+### 系统组件类图
+
+```plantuml
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #E1F5FF
+  BorderColor #1976D2
+  ArrowColor #666666
+}
+
+package "检测模块" {
+  class TrackNetV3 {
+    - model: nn.Module
+    - attention: CBAM
+    - num_frames: int
+    - threshold: float
+    + detect_video(video_path: str) -> Dict
+    + detect_frame(frame: np.ndarray) -> Tuple
+    - _forward(frames: Tensor) -> Tensor
+  }
+  
+  class PoseDetector {
+    - inferencer: MMPoseInferencer
+    - court_assigner: CourtBasedPlayerAssigner
+    - court_info: List[float]
+    + detect_video(video_path: str) -> Tuple[np.ndarray, Dict]
+    + set_court_info(court_info: List[float]) -> None
+    - _assign_players(poses: np.ndarray) -> np.ndarray
+  }
+  
+  class CourtDetector {
+    - model: KeypointRCNN
+    - court_info: List[float]
+    - keypoints: np.ndarray
+    + get_court_info(img: np.ndarray) -> Tuple[Optional[List], bool]
+    + get_boundary_params() -> List[float]
+    - _detect_keypoints(img: np.ndarray) -> List[float]
+  }
+}
+
+package "处理模块" {
+  class EventDetector {
+    - trajectory_data: List
+    - poses: Optional[np.ndarray]
+    - fps: float
+    + detect_hits(fps: float, prominence: float, angle_threshold: float) -> Tuple[List, List]
+    - _calculate_angle(line1: np.ndarray, line2: np.ndarray) -> float
+    - _filter_hits_by_pose(hit_frames: List) -> List[int]
+  }
+  
+  class StrokeClassifier {
+    - net: BST
+    - seq_len: int
+    - n_classes: int
+    + classify_hits(trajectory: List, poses: np.ndarray, hits: List) -> List[int]
+    - prepare_hit_segment(hit_frame: int) -> Dict
+    - get_stroke_type_name(stroke_id: int) -> str
+  }
+  
+  class KalmanTrajectorySmoother {
+    - kf: KalmanFilter
+    - max_gap: int
+    - process_noise: float
+    - measurement_noise: float
+    + smooth(x_list: List[float], y_list: List[float], vis_list: List[int]) -> Tuple[List, List, List]
+    - _handle_gap(start_idx: int, end_idx: int) -> None
+  }
+}
+
+package "可视化模块" {
+  class VideoPlayer {
+    - video_path: str
+    - current_frame: int
+    - total_frames: int
+    + load_video(video_path: str) -> bool
+    + play() -> None
+    + pause() -> None
+    + seek_frame(frame_idx: int) -> None
+  }
+  
+  class DataVisualizer {
+    - trajectory_data: List
+    - hit_events: List
+    - stroke_types: List
+    + plot_trajectory() -> None
+    + plot_speed_curve() -> None
+    + plot_height_curve() -> None
+    + plot_distribution() -> None
+  }
+}
+
+TrackNetV3 --> EventDetector : 提供轨迹
+PoseDetector --> EventDetector : 提供姿态
+CourtDetector --> PoseDetector : 提供场地信息
+EventDetector --> StrokeClassifier : 提供击球帧
+EventDetector --> KalmanTrajectorySmoother : 平滑轨迹
+VideoPlayer --> DataVisualizer : 提供视频帧
+DataVisualizer --> EventDetector : 显示击球事件
+DataVisualizer --> StrokeClassifier : 显示击球类型
+
+@enduml
+```
+
+### 数据流部署图
+
+```plantuml
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam componentStyle uml2
+skinparam component {
+  BackgroundColor #90CAF9
+  BorderColor #0D9488
+  ArrowColor #666666
+}
+
+actor "用户" as User
+
+package "GUI 层" {
+  [PySide6 界面] as GUI
+  [视频播放器] as Player
+  [数据可视化] as Viz
+}
+
+package "服务层" {
+  [流水线调度器] as Pipeline
+  [任务管理器] as TaskMgr
+  [结果处理器] as ResultProc
+}
+
+package "算法层" {
+  [球体检测器] as BallDet
+  [姿态检测器] as PoseDet
+  [事件检测器] as EventDet
+  [击球分类器] as StrokeCls
+}
+
+package "数据层" {
+  [视频存储] as VideoStore
+  [JSON 存储] as JSONStore
+  [CSV 存储] as CSVStore
+}
+
+User --> GUI
+GUI --> Player
+GUI --> Viz
+GUI --> Pipeline
+
+Pipeline --> TaskMgr
+Pipeline --> ResultProc
+
+TaskMgr --> BallDet
+TaskMgr --> PoseDet
+TaskMgr --> EventDet
+TaskMgr --> StrokeCls
+
+BallDet --> EventDet
+PoseDet --> EventDet
+EventDet --> StrokeCls
+
+ResultProc --> VideoStore
+ResultProc --> JSONStore
+ResultProc --> CSVStore
+
+Viz --> VideoStore
+Viz --> JSONStore
+Viz --> CSVStore
+
+note right of Pipeline
+  流水线调度器
+  协调所有模块
+  的执行顺序
+end note
+
+note left of BallDet
+  TrackNetV3 + CBAM
+  检测羽毛球位置
+end note
+
+note left of PoseDet
+  MMPose RTMPose
+  检测人体姿态
+end note
+
+note left of StrokeCls
+  BST Transformer
+  分类击球类型
+end note
+
+@enduml
+```
+
+### 状态机图
+
+```plantuml
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam state {
+  BackgroundColor #FFCC00
+  BorderColor #E6B800
+  ArrowColor #666666
+}
+
+[*] --> 初始化 : 启动系统
+
+初始化 --> 加载模型 : 模型路径有效
+初始化 --> 错误 : 模型路径无效
+
+加载模型 --> 视频处理 : 模型加载成功
+加载模型 --> 错误 : 模型加载失败
+
+视频处理 --> 球体检测 : 读取视频帧
+球体检测 --> 姿态检测 : 检测完成
+姿态检测 --> 事件检测 : 检测完成
+事件检测 --> 击球分类 : 检测完成
+击球分类 --> 可视化 : 分类完成
+可视化 --> 数据导出 : 渲染完成
+数据导出 --> [*] : 完成
+
+球体检测 --> 重试 : 检测失败
+姿态检测 --> 重试 : 检测失败
+事件检测 --> 重试 : 检测失败
+击球分类 --> 重试 : 分类失败
+
+重试 --> 错误 : 重试次数 > 3
+重试 --> 球体检测 : 重试次数 ≤ 3
+
+错误 --> [*] : 显示错误信息
+
+state "球体检测" {
+  [*] --> 预处理
+  预处理 --> 推理
+  推理 --> 后处理
+  后处理 --> [*]
+}
+
+state "姿态检测" {
+  [*] --> 人体检测
+  人体检测 --> 关键点检测
+  关键点检测 --> 球员分配
+  球员分配 --> [*]
+}
+
+note right of 初始化
+  系统初始化
+  加载配置文件
+  初始化模型
+end note
+
+note right of 视频处理
+  读取视频文件
+  提取视频帧
+  预处理图像
+end note
+
+note right of 可视化
+  绘制轨迹
+  绘制姿态
+  绘制事件
+  合成视频
+end note
+
+@enduml
+```
+
+### TrackNetV3 模块详细设计图
+
+```plantuml
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #9B59B6
+  BorderColor #8E44AD
+  ArrowColor #666666
+}
+
+class TrackNetV3 {
+  - model: nn.Module
+  - attention: CBAM
+  - num_frames: int
+  - threshold: float
+  - device: str
+  + __init__(model_path: str, num_frames: int, threshold: float, device: str)
+  + detect_video(video_path: str, output_dir: str) -> Dict
+  + detect_frame(frame: np.ndarray) -> Tuple[float, float, float]
+  + set_threshold(threshold: float) -> None
+  + set_num_frames(num_frames: int) -> None
+  - _prepare_frames(video_path: str) -> List[np.ndarray]
+  - _forward(frames: Tensor) -> Tensor
+  - _postprocess(output: Tensor) -> Tuple[float, float, float]
+}
+
+class CBAM {
+  - channel_attention: ChannelAttention
+  - spatial_attention: SpatialAttention
+  + __init__(in_channels: int, reduction_ratio: int)
+  + forward(x: Tensor) -> Tensor
+}
+
+class ChannelAttention {
+  - avg_pool: nn.AdaptiveAvgPool2d
+  - max_pool: nn.AdaptiveMaxPool2d
+  - fc: nn.Sequential
+  - scale: nn.Parameter
+  + __init__(in_channels: int, reduction_ratio: int)
+  + forward(x: Tensor) -> Tensor
+}
+
+class SpatialAttention {
+  - conv: nn.Conv2d
+  - sigmoid: nn.Sigmoid
+  - scale: nn.Parameter
+  + __init__(kernel_size: int)
+  + forward(x: Tensor) -> Tensor
+}
+
+TrackNetV3 *-- CBAM : 包含
+CBAM *-- ChannelAttention : 包含
+CBAM *-- SpatialAttention : 包含
+
+note right of TrackNetV3
+  TrackNetV3 主类
+  负责球体检测
+  和轨迹追踪
+end note
+
+note right of CBAM
+  CBAM 注意力机制
+  结合通道和空间
+  注意力
+end note
+
+@enduml
+```
+
+### BST Transformer 模块详细设计图
+
+```plantuml
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam classAttributeIconSize 0
+skinparam class {
+  BackgroundColor #2ECC71
+  BorderColor #27AE60
+  ArrowColor #666666
+}
+
+class BST {
+  - net: nn.Module
+  - seq_len: int
+  - n_classes: int
+  - model_type: str
+  + __init__(model_path: str, seq_len: int, n_classes: int, model_type: str)
+  + classify_hits(trajectory: List, poses: np.ndarray, hits: List) -> List[int]
+  - prepare_hit_segment(hit_frame: int) -> Dict
+  - get_stroke_type_name(stroke_id: int) -> str
+}
+
+class TCNEncoder {
+  - conv_layers: nn.ModuleList
+  - dropout: nn.Dropout
+  + __init__(input_dim: int, hidden_dim: int, num_layers: int)
+  + forward(x: Tensor) -> Tensor
+}
+
+class TemporalTransformer {
+  - self_attention: nn.MultiheadAttention
+  - ffn: nn.Sequential
+  - layer_norm: nn.LayerNorm
+  + __init__(d_model: int, nhead: int, num_layers: int)
+  + forward(x: Tensor) -> Tensor
+}
+
+class CrossAttention {
+  - attention: nn.MultiheadAttention
+  - ffn: nn.Sequential
+  - layer_norm: nn.LayerNorm
+  + __init__(d_model: int, nhead: int)
+  + forward(query: Tensor, key: Tensor, value: Tensor) -> Tensor
+}
+
+class CleanGate {
+  - gate: nn.Linear
+  + __init__(d_model: int)
+  + forward(x: Tensor) -> Tensor
+}
+
+class AimPlayer {
+  - similarity: nn.CosineSimilarity
+  + __init__()
+  + forward(player1: Tensor, player2: Tensor) -> Tensor
+}
+
+BST *-- TCNEncoder : 使用
+BST *-- TemporalTransformer : 使用
+BST *-- CrossAttention : 使用
+BST *-- CleanGate : 使用
+BST *-- AimPlayer : 使用
+
+note right of BST
+  BST 主类
+  负责击球类型
+  分类
+end note
+
+note right of TCNEncoder
+  TCN 编码器
+  时序卷积网络
+  编码时序特征
+end note
+
+note right of TemporalTransformer
+  时序 Transformer
+  自注意力机制
+  捕捉长距离依赖
+end note
+
+note right of CrossAttention
+  交叉注意力
+  分类 Token 与
+  姿态/轨迹 Token 交互
+end note
+
+note right of CleanGate
+  Clean Gate
+  过滤噪声特征
+  提高分类精度
+end note
+
+note right of AimPlayer
+  Aim Player
+  识别击球者
+  基于余弦相似度
+end note
+
+@enduml
+```
+
+---
 
 ### 实时处理流程图
 
@@ -304,8 +1208,8 @@ sequenceDiagram
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourusername/WindFeather Eye.git
-cd WindFeather Eye
+git clone https://github.com/yourusername/TrackNetV3_Attention.git
+cd TrackNetV3_Attention
 
 # 创建虚拟环境（推荐）
 python -m venv venv
@@ -367,8 +1271,8 @@ pip install pyside6
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourusername/WindFeather Eye.git
-cd WindFeather Eye
+git clone https://github.com/yourusername/TrackNetV3_Attention.git
+cd TrackNetV3_Attention
 
 # 安装依赖
 pip install -r requirements.txt
@@ -542,31 +1446,101 @@ class Conv(nn.Module):
 ##### CBAM 通道注意力流程图
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#9b59b6',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#8e44ad',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[输入特征图<br/>H×W×C] --> B[全局平均池化]
-    A --> C[全局最大池化]
+    subgraph "📥 输入"
+        A[📊 输入特征图<br/>H×W×C]
+    end
     
-    B --> D[共享 MLP]
+    subgraph "🔵 池化层"
+        B[📉 全局平均池化]
+        C[📈 全局最大池化]
+    end
+    
+    subgraph "🧠 共享 MLP"
+        D[🧠 共享 MLP]
+        E[🔽 降维: C → C/r]
+        F[🔄 ReLU 激活]
+        G[🔼 升维: C/r → C]
+    end
+    
+    subgraph "📊 输出"
+        H[📊 平均池化输出]
+        I[📊 最大池化输出]
+    end
+    
+    subgraph "➕ 相加"
+        J[➕ 元素相加]
+    end
+    
+    subgraph "🔄 激活"
+        K[🔄 Sigmoid 激活]
+    end
+    
+    subgraph "⚖️ 权重"
+        L[⚖️ 通道权重<br/>1×1×C]
+    end
+    
+    subgraph "🔧 缩放"
+        M[🔧 可学习缩放]
+        N[📏 缩放后的权重]
+    end
+    
+    subgraph "✖️ 相乘"
+        O[✖️ 逐通道相乘]
+    end
+    
+    subgraph "📤 输出"
+        P[📊 输出特征图<br/>H×W×C]
+    end
+    
+    A --> B
+    A --> C
+    B --> D
     C --> D
-    
-    D --> E[降维: C → C/r]
-    E --> F[ReLU 激活]
-    F --> G[升维: C/r → C]
-    
-    G --> H[平均池化输出]
-    G --> I[最大池化输出]
-    
-    H --> J[元素相加]
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    G --> I
+    H --> J
     I --> J
+    J --> K
+    K --> L
+    L --> M
+    M --> N
+    N --> O
+    O --> P
     
-    J --> K[Sigmoid 激活]
-    K --> L[通道权重<br/>1×1×C]
+    classDef inputStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef poolStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef mlpStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef outputStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef addStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef activateStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
+    classDef weightStyle fill:#ffcc00,stroke:#e6b800,stroke-width:2px
+    classDef scaleStyle fill:#ff6b6b,stroke:#c0392b,stroke-width:2px
+    classDef multiplyStyle fill:#98fb98,stroke:#2e7d32,stroke-width:2px
+    classDef finalStyle fill:#ffcccb,stroke:#d35400,stroke-width:3px
     
-    L --> M[可学习缩放]
-    M --> N[缩放后的权重]
-    
-    N --> O[逐通道相乘]
-    O --> P[输出特征图<br/>H×W×C]
+    class A inputStyle
+    class B,C poolStyle
+    class D,E,F,G mlpStyle
+    class H,I outputStyle
+    class J addStyle
+    class K activateStyle
+    class L weightStyle
+    class M,N scaleStyle
+    class O multiplyStyle
+    class P finalStyle
 ```
 
 ```python
@@ -611,27 +1585,101 @@ class ChannelAttention(nn.Module):
 ##### CBAM 空间注意力流程图
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#2ecc71',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#27ae60',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[输入特征图<br/>H×W×C] --> B[通道平均池化]
-    A --> C[通道最大池化]
+    subgraph "📥 输入"
+        A[📊 输入特征图<br/>H×W×C]
+    end
     
-    B --> D[沿通道维度平均<br/>H×W×1]
-    C --> E[沿通道维度最大<br/>H×W×1]
+    subgraph "🔵 池化层"
+        B[📉 通道平均池化]
+        C[📈 通道最大池化]
+    end
     
-    D --> F[拼接<br/>H×W×2]
+    subgraph "📊 池化输出"
+        D[📊 沿通道维度平均<br/>H×W×1]
+        E[📊 沿通道维度最大<br/>H×W×1]
+    end
+    
+    subgraph "🔗 拼接"
+        F[🔗 拼接<br/>H×W×2]
+    end
+    
+    subgraph "🧮 卷积"
+        G[🧮 7×7 卷积]
+    end
+    
+    subgraph "📊 空间特征"
+        H[📊 空间特征<br/>H×W×1]
+    end
+    
+    subgraph "🔄 激活"
+        I[🔄 Sigmoid 激活]
+    end
+    
+    subgraph "⚖️ 权重"
+        J[⚖️ 空间权重<br/>H×W×1]
+    end
+    
+    subgraph "🔧 缩放"
+        K[🔧 可学习缩放]
+        L[📏 缩放后的权重]
+    end
+    
+    subgraph "✖️ 相乘"
+        M[✖️ 逐像素相乘]
+    end
+    
+    subgraph "📤 输出"
+        N[📊 输出特征图<br/>H×W×C]
+    end
+    
+    A --> B
+    A --> C
+    B --> D
+    C --> E
+    D --> F
     E --> F
+    F --> G
+    G --> H
+    H --> I
+    I --> J
+    J --> K
+    K --> L
+    L --> M
+    M --> N
     
-    F --> G[7×7 卷积]
-    G --> H[空间特征<br/>H×W×1]
+    classDef inputStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef poolStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef outputStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef concatStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef convStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef spatialStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
+    classDef activateStyle fill:#ffcc00,stroke:#e6b800,stroke-width:2px
+    classDef weightStyle fill:#ff6b6b,stroke:#c0392b,stroke-width:2px
+    classDef scaleStyle fill:#98fb98,stroke:#2e7d32,stroke-width:2px
+    classDef multiplyStyle fill:#ffcccb,stroke:#d35400,stroke-width:2px
+    classDef finalStyle fill:#e67e22,stroke:#d35400,stroke-width:3px
     
-    H --> I[Sigmoid 激活]
-    I --> J[空间权重<br/>H×W×1]
-    
-    J --> K[可学习缩放]
-    K --> L[缩放后的权重]
-    
-    L --> M[逐像素相乘]
-    M --> N[输出特征图<br/>H×W×C]
+    class A inputStyle
+    class B,C poolStyle
+    class D,E outputStyle
+    class F concatStyle
+    class G convStyle
+    class H spatialStyle
+    class I activateStyle
+    class J weightStyle
+    class K,L scaleStyle
+    class M multiplyStyle
+    class N finalStyle
 ```
 
 ```python
@@ -669,31 +1717,92 @@ class SpatialAttention(nn.Module):
 #### 卡尔曼滤波器工作流程图
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#9b59b6',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#8e44ad',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[初始化] --> B[设置状态向量 x]
-    A --> C[设置协方差 P]
-    A --> D[设置状态转移矩阵 F]
-    A --> E[设置观测矩阵 H]
-    A --> F[设置过程噪声 Q]
-    A --> G[设置测量噪声 R]
+    subgraph "📥 初始化"
+        A[🔧 初始化<br/>设置参数]
+    end
     
-    B --> H[预测步骤]
+    subgraph "📊 状态设置"
+        B[📋 设置状态向量 x<br/>[x, y, vx, vy]^T]
+        C[📋 设置协方差 P<br/>初始协方差]
+        D[📋 设置状态转移矩阵 F<br/>dt参数]
+        E[📋 设置观测矩阵 H<br/>观测维度]
+        F[📋 设置过程噪声 Q<br/>过程噪声协方差]
+        G[📋 设置测量噪声 R<br/>测量噪声协方差]
+    end
+    
+    subgraph "🔮 预测步骤"
+        H[📐 状态预测<br/>x̂ = F @ x]
+        I[📐 协方差预测<br/>P̂ = F @ P @ F.T + Q]
+    end
+    
+    subgraph "📝 更新步骤"
+        subgraph "新息计算"
+            M[📐 计算新息<br/>y = z - H @ x]
+            N[📐 计算新息协方差<br/>S = H @ P @ H.T + R]
+        end
+        
+        subgraph "卡尔曼增益"
+            O[📐 计算卡尔曼增益<br/>K = P @ H.T @ S⁻¹]
+        end
+        
+        subgraph "状态更新"
+            P[📐 状态更新<br/>x = x + K @ y]
+            Q[📐 协方差更新<br/>P = (I - K @ H) @ P]
+        end
+    end
+    
+    subgraph "📤 输出"
+        R[📈 输出状态<br/>更新后的状态向量]
+    end
+    
+    A --> B
+    A --> C
+    A --> D
+    A --> E
+    A --> F
+    A --> G
+    B --> H
     C --> H
     D --> H
-    H --> I[状态预测 x̂ = F @ x]
-    H --> J[协方差预测 P̂ = F @ P @ F.T + Q]
-    
-    K[观测数据 z] --> L[更新步骤]
-    I --> L
-    J --> L
-    L --> M[计算新息 y = z - H @ x]
-    L --> N[计算新息协方差 S = H @ P @ H.T + R]
-    L --> O[计算卡尔曼增益 K = P @ H.T @ S⁻¹]
-    O --> P[状态更新 x = x + K @ y]
-    O --> Q[协方差更新 P = (I - K @ H) @ P]
-    
-    P --> R[输出状态]
+    E --> H
+    F --> H
+    G --> H
+    H --> I
+    H --> J
+    I --> M
+    J --> M
+    M --> N
+    N --> O
+    O --> P
+    O --> Q
+    P --> R
     Q --> R
+    
+    classDef initStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef stateStyle fill:#90caf9,stroke:#0d9488,stroke-width:2px
+    classDef predictStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef innovationStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef gainStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef updateStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef outputStyle fill:#ffcccb,stroke:#d35400,stroke-width:3px
+    
+    class A initStyle
+    class B,C,D,E,F,G stateStyle
+    class H,I predictStyle
+    class J,K innovationStyle
+    class L,M,N gainStyle
+    class O,P,Q updateStyle
+    class R outputStyle
 ```
 
 #### 状态空间模型
@@ -773,30 +1882,89 @@ class KalmanTrajectorySmoother:
 #### BST 架构流程图
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#9b59b6',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#8e44ad',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[输入数据] --> B[姿态数据]
-    A --> C[轨迹数据]
-    A --> D[位置数据]
+    subgraph "📥 输入层"
+        A[📊 输入数据<br/>姿态+轨迹+位置]
+    end
     
-    B --> E[TCN 姿态编码]
-    C --> F[TCN 轨迹编码]
-    D --> G[位置编码]
+    subgraph "🧠 编码层"
+        B[🏃 姿态数据<br/>17关键点×2坐标]
+        C[📍 轨迹数据<br/>2坐标×时序]
+        D[🎯 位置数据<br/>2坐标]
+        E[🔵 TCN 姿态编码<br/>时序卷积]
+        F[🔵 TCN 轨迹编码<br/>时序卷积]
+        G[🔵 位置编码<br/>位置编码]
+    end
     
-    E --> H[时序 Transformer]
+    subgraph "🟣 时序层"
+        H[🟡 时序 Transformer<br/>自注意力<br/>前馈网络]
+    end
+    
+    subgraph "🎯 Token 生成"
+        I[🟠 分类 Token<br/>全局信息]
+        J[🟠 姿态 Token<br/>时序信息]
+        K[🟠 轨迹 Token<br/>时序信息]
+    end
+    
+    subgraph "🎯 交叉注意力"
+        L[🟢 交叉注意力层<br/>分类-姿态<br/>分类-轨迹]
+    end
+    
+    subgraph "🔄 交互层"
+        M[🟣 交互 Transformer<br/>多层Transformer<br/>残差连接]
+    end
+    
+    subgraph "📊 输出层"
+        N[🧮 MLP Head<br/>全连接层<br/>Dropout]
+        O[📈 输出<br/>35类击球类型<br/>Softmax]
+    end
+    
+    A --> B
+    A --> C
+    A --> D
+    B --> E
+    C --> F
+    D --> G
+    E --> H
     F --> H
     G --> H
-    
-    H --> I[分类 Token]
-    H --> J[姿态 Token]
-    H --> K[轨迹 Token]
-    
-    I --> L[交叉注意力]
+    H --> I
+    H --> J
+    H --> K
+    I --> L
     J --> L
     K --> L
+    L --> M
+    M --> N
+    N --> O
     
-    L --> M[交互 Transformer]
-    M --> N[MLP Head]
-    N --> O[输出 35 类击球类型]
+    classDef inputStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef encodeStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef temporalStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef tokenStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef crossStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef interactStyle fill:#e67e22,stroke:#d35400,stroke-width:2px
+    classDef mlpStyle fill:#ffcc00,stroke:#e6b800,stroke-width:2px
+    classDef outputStyle fill:#ffcccb,stroke:#d35400,stroke-width:3px
+    
+    class A inputStyle
+    class B,C,D encodeStyle
+    class E,F,G encodeStyle
+    class H temporalStyle
+    class I,J,K tokenStyle
+    class L crossStyle
+    class M interactStyle
+    class N mlpStyle
+    class O outputStyle
 ```
 
 #### 多头交叉注意力
@@ -876,68 +2044,192 @@ class TCN(nn.Module):
 ### 检测流程
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e74c3c',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#c0392b',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[轨迹数据] --> B[峰值检测]
-    A --> C[谷值检测]
-    B --> D[角度计算]
+    subgraph "📥 输入"
+        A[📊 轨迹数据<br/>X,Y坐标列表]
+    end
+    
+    subgraph "🔍 检测层"
+        B[📈 峰值检测<br/>find_peaks]
+        C[📉 谷值检测<br/>find_peaks 负值]
+    end
+    
+    subgraph "🧠 计算层"
+        D[📐 角度计算<br/>向量夹角]
+    end
+    
+    subgraph "🎯 过滤层"
+        E[⚖️ 角度阈值过滤<br/>角度 > 阈值]
+    end
+    
+    subgraph "✅ 验证层"
+        F[🔄 连续性验证<br/>检查后续帧]
+        G[🏃 姿态验证<br/>球-球员距离]
+        H[🏁 落地帧过滤<br/>识别落地]
+    end
+    
+    subgraph "📊 输出"
+        I[🎯 最终击球帧<br/>击球帧列表]
+    end
+    
+    A --> B
+    A --> C
+    B --> D
     C --> D
-    D --> E[角度阈值过滤]
-    E --> F[连续性验证]
-    F --> G[姿态验证]
-    G --> H[落地帧过滤]
-    H --> I[最终击球帧]
+    D --> E
+    E --> F
+    F --> G
+    G --> H
+    H --> I
+    
+    classDef inputStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef detectStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
+    classDef computeStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef filterStyle fill:#ffcc00,stroke:#e6b800,stroke-width:2px
+    classDef validateStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef outputStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:3px
+    
+    class A inputStyle
+    class B,C detectStyle
+    class D computeStyle
+    class E filterStyle
+    class F,G,H validateStyle
+    class I outputStyle
 ```
 
 ### 详细检测流程图
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e74c3c',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#c0392b',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[输入轨迹数据] --> B{数据预处理}
-    B --> B1[提取有效点]
-    B --> B2[计算 Y 坐标]
+    subgraph "📥 输入"
+        A[📊 输入轨迹数据<br/>X,Y坐标列表]
+    end
     
-    B1 --> C{峰值检测}
+    subgraph "🔍 预处理"
+        B{数据预处理}
+        B1[✅ 提取有效点<br/>过滤None值]
+        B2[📐 计算Y坐标<br/>提取Y维度]
+    end
+    
+    subgraph "🔵 峰值检测"
+        C{峰值检测}
+        C1[📈 find_peaks<br/>正峰值]
+        C2[📉 find_peaks<br/>负峰值]
+    end
+    
+    subgraph "🧮 角度计算"
+        D{角度计算}
+        D1[📐 计算斜率<br/>相邻点差分]
+        D2[📏 计算向量<br/>方向向量]
+        D3[📐 计算角度<br/>arccos点积]
+    end
+    
+    subgraph "🎯 过滤决策"
+        E{角度过滤}
+        E1[✅ 保留击球点<br/>角度>阈值]
+        E2[❌ 丢弃击球点<br/>角度≤阈值]
+    end
+    
+    subgraph "✅ 连续性验证"
+        H{连续性验证}
+        H1[🔍 检查后续帧<br/>未来N帧]
+        H2[📐 计算移动距离<br/>欧氏距离]
+        H3[📊 移动≥阈值?<br/>min_movement]
+    end
+    
+    subgraph "🏃 姿态验证"
+        I{姿态验证}
+        I1[📐 计算球员质心<br/>关键点平均]
+        I2[📏 计算球-球员距离<br/>欧氏距离]
+        I3[🎯 选择最近球员<br/>min距离]
+    end
+    
+    subgraph "🏁 落地检测"
+        J{落地帧检测}
+        J1[📐 计算地面Y坐标<br/>90分位数]
+        J2[🔍 识别落地帧<br/>从后往前搜索]
+        J3[📊 过滤落地后<br/>去除后续击球]
+    end
+    
+    subgraph "📤 输出"
+        K{最终输出}
+        K1[📋 击球帧列表<br/>frame索引]
+        K2[🏃 击球球员列表<br/>player 1/2]
+    end
+    
+    A --> B
+    B1 --> C
     B2 --> C
-    C --> C1[find_peaks]
-    C --> C2[find_peaks 负值]
-    
-    C1 --> D{角度计算}
+    C --> C1
+    C --> C2
+    C1 --> D
     C2 --> D
-    D --> D1[计算斜率]
-    D --> D2[计算向量]
-    D --> D3[计算角度]
-    
-    D1 --> E{角度过滤}
+    D --> D1
+    D --> D2
+    D --> D3
+    D1 --> E
     D2 --> E
     D3 --> E
-    E --> E1[角度 > 阈值?]
-    E1 -->|是| F[保留击球点]
-    E1 -->|否| G[丢弃击球点]
-    
-    F --> H{连续性验证}
-    G --> H
-    H --> H1[检查后续帧]
-    H --> H2[计算移动距离]
-    H --> H3[移动 >= 阈值?]
-    
-    H1 --> I{姿态验证}
+    E --> E1
+    E --> E2
+    E1 --> H
+    E2 --> H
+    H --> H1
+    H --> H2
+    H --> H3
+    H1 --> I
     H2 --> I
     H3 --> I
-    I --> I1[计算球员质心]
-    I --> I2[计算球-球员距离]
-    I --> I3[选择最近球员]
-    
-    I1 --> J{落地帧检测}
-    I2 --> J
-    I3 --> J
-    J --> J1[计算地面 Y 坐标]
-    J --> J2[识别落地帧]
-    
-    J1 --> K[最终输出]
+    I --> I1
+    I --> I2
+    I --> I3
+    H --> J
+    I --> J
+    J --> J1
+    J --> J2
+    J --> J3
+    J1 --> K
     J2 --> K
     J3 --> K
-    K --> K1[击球帧列表]
-    K --> K2[击球球员列表]
+    K --> K1
+    K --> K2
+    
+    classDef inputStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef preprocessStyle fill:#90caf9,stroke:#0d9488,stroke-width:2px
+    classDef detectStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
+    classDef computeStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef filterStyle fill:#ffcc00,stroke:#e6b800,stroke-width:2px
+    classDef validateStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef landingStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef outputStyle fill:#ffcccb,stroke:#d35400,stroke-width:3px
+    
+    class A inputStyle
+    class B1,B2 preprocessStyle
+    class C1,C2 detectStyle
+    class D1,D2,D3 computeStyle
+    class E1,E2 filterStyle
+    class H1,H2,H3 validateStyle
+    class I1,I2,I3 validateStyle
+    class J1,J2,J3 landingStyle
+    class K1,K2 outputStyle
 ```
 
 ### 峰值和谷值检测
@@ -1058,34 +2350,97 @@ def _detect_landing_frame(self):
 #### 骨骼结构流程图
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e74c3c',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#c0392b',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[姿态关键点] --> B{骨骼对}
-    B --> B1[头部骨骼]
-    B --> B2[上肢骨骼]
-    B --> B3[躯干骨骼]
-    B --> B4[下肢骨骼]
+    subgraph "🦴 姿态关键点"
+        A[🦴 姿态关键点]
+    end
     
-    B1 --> C1[(0,1)]
-    B1 --> C2[(0,2)]
-    B1 --> C3[(1,2)]
-    B1 --> C4[(1,3)]
-    B1 --> C5[(2,4)]
+    subgraph "🎯 骨骼对"
+        B{骨骼对}
+        B1[👤 头部骨骼]
+        B2[💪 上肢骨骼]
+        B3[🏃 躯干骨骼]
+        B4[🦵 下肢骨骼]
+    end
     
-    B2 --> C6[(3,5)]
-    B2 --> C7[(5,7)]
-    B2 --> C8[(7,9)]
-    B2 --> C9[(6,8)]
-    B2 --> C10[(8,10)]
+    subgraph "👤 头部骨骼"
+        C1[(0,1)]
+        C2[(0,2)]
+        C3[(1,2)]
+        C4[(1,3)]
+        C5[(2,4)]
+    end
     
-    B3 --> C11[(5,6)]
-    B3 --> C12[(5,11)]
-    B3 --> C13[(6,12)]
-    B3 --> C14[(11,12)]
+    subgraph "💪 上肢骨骼"
+        C6[(3,5)]
+        C7[(5,7)]
+        C8[(7,9)]
+        C9[(6,8)]
+        C10[(8,10)]
+    end
     
-    B4 --> C15[(11,13)]
-    B4 --> C16[(13,15)]
-    B4 --> C17[(12,14)]
-    B4 --> C18[(14,16)]
+    subgraph "🏃 躯干骨骼"
+        C11[(5,6)]
+        C12[(5,11)]
+        C13[(6,12)]
+        C14[(11,12)]
+    end
+    
+    subgraph "🦵 下肢骨骼"
+        C15[(11,13)]
+        C16[(13,15)]
+        C17[(12,14)]
+        C18[(14,16)]
+    end
+    
+    A --> B
+    B --> B1
+    B --> B2
+    B --> B3
+    B --> B4
+    B1 --> C1
+    B1 --> C2
+    B1 --> C3
+    B1 --> C4
+    B1 --> C5
+    B2 --> C6
+    B2 --> C7
+    B2 --> C8
+    B2 --> C9
+    B2 --> C10
+    B3 --> C11
+    B3 --> C12
+    B3 --> C13
+    B3 --> C14
+    B4 --> C15
+    B4 --> C16
+    B4 --> C17
+    B4 --> C18
+    
+    classDef inputStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef boneStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
+    classDef headStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef upperStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef torsoStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef lowerStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef pairStyle fill:#ffcc00,stroke:#e6b800,stroke-width:2px,stroke-dasharray: 3 3
+    
+    class A inputStyle
+    class B boneStyle
+    class B1,B2,B3,B4 boneStyle
+    class C1,C2,C3,C4,C5 headStyle
+    class C6,C7,C8,C9,C10 upperStyle
+    class C11,C12,C13,C14 torsoStyle
+    class C15,C16,C17,C18 lowerStyle
 ```
 
 ### 骨骼计算
@@ -1273,39 +2628,83 @@ stroke_types = [
 #### 性能优化流程图
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#2ecc71',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#27ae60',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[原始代码] --> B{优化目标}
-    B --> B1[GPU 优化]
-    B --> B2[CPU 优化]
-    B --> B3[内存优化]
+    subgraph "📥 输入"
+        A[📹 原始代码]
+    end
     
-    B1 --> C1[cuDNN benchmark]
-    B1 --> C2[混合精度训练]
-    B1 --> C3[梯度累积]
-    B1 --> C4[非阻塞异步传输]
-    B1 --> C5[pin_memory]
+    subgraph "🎯 优化目标"
+        B{优化类型}
+        B1[🔵 GPU 优化]
+        B2[🟢 CPU 优化]
+        B3[🟠 内存优化]
+    end
     
-    B2 --> D1[多进程处理]
-    B2 --> D2[numba 加速]
+    subgraph "🔵 GPU 优化"
+        C1[cuDNN benchmark]
+        C2[混合精度训练]
+        C3[梯度累积]
+        C4[非阻塞异步传输]
+        C5[pin_memory]
+    end
     
-    B3 --> E1[使用生成器]
-    B3 --> E2[内存映射]
-    B3 --> E3[及时释放内存]
+    subgraph "🟢 CPU 优化"
+        D1[多进程处理]
+        D2[numba 加速]
+    end
     
-    C1 --> F[优化后代码]
+    subgraph "🟠 内存优化"
+        E1[使用生成器]
+        E2[内存映射]
+        E3[及时释放内存]
+    end
+    
+    subgraph "📊 优化后代码"
+        F[性能提升]
+    end
+    
+    A --> B
+    B1 --> C1
+    B1 --> C2
+    B1 --> C3
+    B1 --> C4
+    B1 --> C5
+    B2 --> D1
+    B2 --> D2
+    C1 --> F
     C2 --> F
     C3 --> F
     C4 --> F
     C5 --> F
-    
     D1 --> F
     D2 --> F
-    
     E1 --> F
     E2 --> F
     E3 --> F
     
-    F --> G[性能提升]
+    classDef inputStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef objectiveStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
+    classDef gpuStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef cpuStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef memoryStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef outputStyle fill:#2ecc71,stroke:#27ae60,stroke-width:3px
+    
+    class A inputStyle
+    class B objectiveStyle
+    class B1,B2,B3 gpuStyle,cpuStyle,memoryStyle
+    class C1,C2,C3,C4,C5 gpuStyle
+    class D1,D2 cpuStyle
+    class E1,E2,E3 memoryStyle
+    class F outputStyle
 ```
 
 #### 1. 批处理优化
@@ -1354,24 +2753,74 @@ for i, batch in enumerate(dataloader):
 #### 参数调优流程图
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#f39c12',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#d35400',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[开始调优] --> B{选择目标}
-    B --> B1[提高召回率]
-    B --> B2[提高精确率]
-    B --> B3[平衡配置]
+    subgraph "📥 开始"
+        A[🚀 开始调优]
+    end
     
-    B1 --> C1[降低阈值]
-    B1 --> C2[降低角度阈值]
-    B1 --> C3[减小帧间隔]
+    subgraph "🎯 选择目标"
+        B{调优目标}
+        B1[📈 提高召回率]
+        B2[📊 提高精确率]
+        B3[⚖️ 平衡配置]
+    end
     
-    B2 --> D1[提高阈值]
-    B2 --> D2[提高角度阈值]
-    B2 --> D3[增大帧间隔]
+    subgraph "📈 召回率优化"
+        C1[🔽 降低阈值]
+        C2[🔽 降低角度阈值]
+        C3[🔽 减小帧间隔]
+    end
     
-    B3 --> E1[使用默认值]
-    B3 --> E2[微调参数]
+    subgraph "📊 精确率优化"
+        D1[🔼 提高阈值]
+        D2[🔼 提高角度阈值]
+        D3[🔼 增大帧间隔]
+    end
     
-    C1 --> F[运行分析]
+    subgraph "⚖️ 平衡配置"
+        E1[✅ 使用默认值]
+        E2[🔧 微调参数]
+    end
+    
+    subgraph "🔬 运行分析"
+        F[🔬 运行分析]
+    end
+    
+    subgraph "📊 评估结果"
+        G[📊 评估结果]
+    end
+    
+    subgraph "❓ 决策"
+        H{结果满意?}
+    end
+    
+    subgraph "✅ 完成"
+        I[✅ 保存配置]
+    end
+    
+    subgraph "🔄 循环"
+        J[🔄 调整参数]
+    end
+    
+    A --> B
+    B1 --> C1
+    B1 --> C2
+    B1 --> C3
+    B2 --> D1
+    B2 --> D2
+    B2 --> D3
+    B3 --> E1
+    B3 --> E2
+    C1 --> F
     C2 --> F
     C3 --> F
     D1 --> F
@@ -1379,13 +2828,34 @@ graph TB
     D3 --> F
     E1 --> F
     E2 --> F
-    
-    F --> G[评估结果]
-    G --> H{结果满意?}
-    
-    H -->|是| I[保存配置]
-    H -->|否| J[调整参数]
+    F --> G
+    G --> H
+    H -->|是| I
+    H -->|否| J
     J --> B
+    
+    classDef startStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef objectiveStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
+    classDef recallStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef precisionStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef balanceStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef runStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef evalStyle fill:#ffcc00,stroke:#e6b800,stroke-width:2px
+    classDef decisionStyle fill:#ff6b6b,stroke:#c0392b,stroke-width:2px
+    classDef completeStyle fill:#98fb98,stroke:#2e7d32,stroke-width:3px
+    classDef loopStyle fill:#ffcccb,stroke:#d35400,stroke-width:2px,stroke-dasharray: 5 5
+    
+    class A startStyle
+    class B objectiveStyle
+    class B1,B2,B3 objectiveStyle
+    class C1,C2,C3 recallStyle
+    class D1,D2,D3 precisionStyle
+    class E1,E2 balanceStyle
+    class F runStyle
+    class G evalStyle
+    class H decisionStyle
+    class I completeStyle
+    class J loopStyle
 ```
 
 #### 事件检测参数
@@ -1983,7 +3453,7 @@ def detect_hits(self, fps=25, prominence=2, angle_threshold=30,
 ## 📁 项目结构
 
 ```
-WindFeather Eye/
+TrackNetV3_Attention/
 ├── core/                                    # 核心算法模块
 │   ├── TrackNetAttention.py                 # TrackNetV3 + CBAM 模型
 │   │   ├── Conv                            # 卷积块（Conv+BN+ReLU）
@@ -3471,26 +4941,98 @@ graph LR
 ### 故障排除流程图
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#e74c3c',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#c0392b',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[遇到问题] --> B{问题类型}
+    subgraph "📥 问题"
+        A[❓ 遇到问题]
+    end
     
-    B -->|内存不足| C[清理 GPU 缓存]
-    B -->|模型未找到| D[检查模型文件]
-    B -->|视频无法打开| E[检查视频格式]
-    B -->|检测失败| F[检查输入数据]
-    B -->|性能瓶颈| G[使用 profiler]
+    subgraph "🎯 问题类型"
+        B{问题类型}
+        B1[💾 内存不足]
+        B2[📁 模型未找到]
+        B3[🎬 视频无法打开]
+        B4[🔍 检测失败]
+        B5[⚡ 性能瓶颈]
+    end
     
-    C --> H[减小批次大小]
-    D --> I[下载模型]
-    E --> J[转换视频格式]
-    F --> K[可视化调试]
-    G --> L[分析性能]
+    subgraph "💾 内存不足"
+        C[🧹 清理 GPU 缓存]
+        H[🔽 减小批次大小]
+    end
     
-    H --> M[问题解决]
+    subgraph "📁 模型未找到"
+        D[🔍 检查模型文件]
+        I[📥 下载模型]
+    end
+    
+    subgraph "🎬 视频无法打开"
+        E[🔍 检查视频格式]
+        J[🔄 转换视频格式]
+    end
+    
+    subgraph "🔍 检测失败"
+        F[🔍 检查输入数据]
+        K[🖼️ 可视化调试]
+    end
+    
+    subgraph "⚡ 性能瓶颈"
+        G[📊 使用 profiler]
+        L[📈 分析性能]
+    end
+    
+    subgraph "✅ 解决"
+        M[✅ 问题解决]
+    end
+    
+    A --> B
+    B --> B1
+    B --> B2
+    B --> B3
+    B --> B4
+    B --> B5
+    B1 --> C
+    B2 --> D
+    B3 --> E
+    B4 --> F
+    B5 --> G
+    C --> H
+    D --> I
+    E --> J
+    F --> K
+    G --> L
+    H --> M
     I --> M
     J --> M
     K --> M
     L --> M
+    
+    classDef problemStyle fill:#e74c3c,stroke:#c0392b,stroke-width:3px
+    classDef typeStyle fill:#ffcc00,stroke:#e6b800,stroke-width:2px
+    classDef memoryStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef modelStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef videoStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef detectStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef perfStyle fill:#e67e22,stroke:#d35400,stroke-width:2px
+    classDef solutionStyle fill:#98fb98,stroke:#2e7d32,stroke-width:3px
+    
+    class A problemStyle
+    class B typeStyle
+    class B1,B2,B3,B4,B5 typeStyle
+    class C,H memoryStyle
+    class D,I modelStyle
+    class E,J videoStyle
+    class F,K detectStyle
+    class G,L perfStyle
+    class M solutionStyle
 ```
 
 ### 常见错误及解决方案
@@ -3710,43 +5252,127 @@ gc.collect()
 #### 调试流程图
 
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {
+  'primaryColor': '#3498db',
+  'primaryTextColor': '#ffffff',
+  'primaryBorderColor': '#2980b9',
+  'lineColor': '#666666',
+  'sectionBkgColor': '#f5f5f5',
+  'altSectionBkgColor': '#ffffff',
+  'gridColor': '#e0e0e0'
+}}}
 graph TB
-    A[开始调试] --> B{调试方法}
+    subgraph "📥 开始"
+        A[🚀 开始调试]
+    end
     
-    B -->|日志记录| C[设置日志级别]
-    B -->|可视化调试| D[生成调试图表]
-    B -->|断点调试| E[设置断点]
-    B -->|性能分析| F[使用 profiler]
+    subgraph "🎯 调试方法"
+        B{调试方法}
+        B1[📝 日志记录]
+        B2[🖼️ 可视化调试]
+        B3[🔍 断点调试]
+        B4[📊 性能分析]
+    end
     
-    C --> G[记录关键信息]
-    G --> H[保存日志文件]
-    H --> I[分析日志]
+    subgraph "📝 日志记录"
+        C[⚙️ 设置日志级别]
+        G[📋 记录关键信息]
+        H[💾 保存日志文件]
+        I[🔍 分析日志]
+    end
     
-    D --> J[生成轨迹图]
-    D --> K[生成时间序列图]
-    D --> L[生成速度曲线图]
-    J --> M[保存图表]
+    subgraph "🖼️ 可视化调试"
+        D[🖼️ 生成调试图表]
+        J[📈 生成轨迹图]
+        K[📊 生成时间序列图]
+        L[📉 生成速度曲线图]
+        M[💾 保存图表]
+    end
+    
+    subgraph "🔍 断点调试"
+        E[🔍 设置断点]
+        N[📍 设置断点位置]
+        O[▶️ 运行调试器]
+        P[🔎 检查变量值]
+        Q[⏭️ 单步执行]
+    end
+    
+    subgraph "📊 性能分析"
+        F[📊 使用 profiler]
+        R[🚀 启动 profiler]
+        S[▶️ 运行代码]
+        T[📈 分析性能报告]
+        U[🔍 识别瓶颈]
+    end
+    
+    subgraph "🎯 问题定位"
+        V[🎯 问题定位]
+    end
+    
+    subgraph "🔧 修复"
+        W[🔧 修复问题]
+    end
+    
+    subgraph "✅ 验证"
+        X[✅ 验证修复]
+    end
+    
+    subgraph "🏁 完成"
+        Y[🏁 调试完成]
+    end
+    
+    A --> B
+    B1 --> C
+    B2 --> D
+    B3 --> E
+    B4 --> F
+    C --> G
+    G --> H
+    H --> I
+    D --> J
+    D --> K
+    D --> L
+    J --> M
     K --> M
     L --> M
-    
-    E --> N[设置断点位置]
-    N --> O[运行调试器]
-    O --> P[检查变量值]
-    P --> Q[单步执行]
-    
-    F --> R[启动 profiler]
-    R --> S[运行代码]
-    S --> T[分析性能报告]
-    T --> U[识别瓶颈]
-    
-    I --> V[问题定位]
+    E --> N
+    N --> O
+    O --> P
+    P --> Q
+    F --> R
+    R --> S
+    S --> T
+    T --> U
+    I --> V
     M --> V
     Q --> V
     U --> V
+    V --> W
+    W --> X
+    X --> Y
     
-    V --> W[修复问题]
-    W --> X[验证修复]
-    X --> Y[调试完成]
+    classDef startStyle fill:#e1f5ff,stroke:#1976d2,stroke-width:3px
+    classDef methodStyle fill:#e74c3c,stroke:#c0392b,stroke-width:2px
+    classDef logStyle fill:#9b59b6,stroke:#8e44ad,stroke-width:2px
+    classDef vizStyle fill:#3498db,stroke:#2980b9,stroke-width:2px
+    classDef breakpointStyle fill:#2ecc71,stroke:#27ae60,stroke-width:2px
+    classDef perfStyle fill:#f39c12,stroke:#d35400,stroke-width:2px
+    classDef locateStyle fill:#ffcc00,stroke:#e6b800,stroke-width:2px
+    classDef fixStyle fill:#ff6b6b,stroke:#c0392b,stroke-width:2px
+    classDef verifyStyle fill:#98fb98,stroke:#2e7d32,stroke-width:2px
+    classDef completeStyle fill:#ffcccb,stroke:#d35400,stroke-width:3px
+    
+    class A startStyle
+    class B methodStyle
+    class B1,B2,B3,B4 methodStyle
+    class C,G,H,I logStyle
+    class D,J,K,L,M vizStyle
+    class E,N,O,P,Q breakpointStyle
+    class F,R,S,T,U perfStyle
+    class V locateStyle
+    class W fixStyle
+    class X verifyStyle
+    class Y completeStyle
 ```
 
 #### 日志记录
@@ -3833,7 +5459,7 @@ def process_trajectory(trajectory):
 ### 如何贡献
 
 #### 报告 Bug
-1. 在 [Issues](https://github.com/yourusername/WindFeather Eye/issues) 中搜索是否已有相同问题
+1. 在 [Issues](https://github.com/yourusername/TrackNetV3_Attention/issues) 中搜索是否已有相同问题
 2. 如果没有，创建新的 Issue
 3. 使用清晰的标题描述问题
 4. 提供详细的重现步骤
@@ -3841,7 +5467,7 @@ def process_trajectory(trajectory):
 6. 添加相关的日志和错误信息
 
 #### 提出新功能
-1. 在 [Issues](https://github.com/yourusername/WindFeather Eye/issues) 中创建新的 Issue
+1. 在 [Issues](https://github.com/yourusername/TrackNetV3_Attention/issues) 中创建新的 Issue
 2. 清晰描述新功能
 3. 说明功能的使用场景
 4. 提供设计思路或伪代码
@@ -4228,22 +5854,30 @@ MIT 许可证是一种非常宽松的许可证，允许：
 
 如有任何问题或建议，请通过以下方式联系：
 
+- **邮箱**: your.email@example.com
+- **GitHub Issues**: https://github.com/yourusername/TrackNetV3_Attention/issues
+- **GitHub Discussions**: https://github.com/yourusername/TrackNetV3_Attention/discussions
+- **Stack Overflow**: 使用标签 `tracknetv3-attention`
+- **Reddit**: r/ComputerVision
+- **Discord**: https://discord.gg/yourinvitecode
 
 ### 支持方式
 
 如果您觉得本项目对您有帮助，欢迎通过以下方式支持：
 
-- **Star 项目**: https://github.com/yourusername/WindFeather Eye
-- **Fork 项目**: https://github.com/yourusername/WindFeather Eye/fork
-- **报告 Bug**: https://github.com/yourusername/WindFeather Eye/issues
-- **提交 PR**: https://github.com/yourusername/WindFeather Eye/pulls
+- **Star 项目**: https://github.com/yourusername/TrackNetV3_Attention
+- **Fork 项目**: https://github.com/yourusername/TrackNetV3_Attention/fork
+- **报告 Bug**: https://github.com/yourusername/TrackNetV3_Attention/issues
+- **提交 PR**: https://github.com/yourusername/TrackNetV3_Attention/pulls
 - **分享项目**: 在社交媒体上分享本项目
 
 ### 更新日志
 
+查看 [CHANGELOG.md](CHANGELOG.md) 了解项目的更新历史。
 
 ### 路线图
 
+查看 [ROADMAP.md](ROADMAP.md) 了解项目的未来计划。
 
 ---
 
@@ -4251,9 +5885,8 @@ MIT 许可证是一种非常宽松的许可证，允许：
 
 **如果这个项目对您有帮助，请给我们一个 Star ⭐**
 
-[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/WindFeather Eye&type=Date)]
+[![Star History Chart](https://api.star-history.com/svg?repos=yourusername/TrackNetV3_Attention&type=Date)]
 
 **Made with ❤️ by [Your Name](https://github.com/yourusername)**
 
 </div>
-
